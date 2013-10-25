@@ -74,6 +74,10 @@ string SuperClassName(const Descriptor* descriptor);
 // anyway, so normally this just returns field->name().
 string FieldName(const FieldDescriptor* field);
 
+// Get the sanitized name that should be used for the  given enum in C++ code.
+// The name is optionally mangled for reserved keyword collisions.
+string EnumName(const EnumValueDescriptor* enum_value, bool mangle);
+
 // Get the unqualified name that should be used for a field's field
 // number constant.
 string FieldConstantName(const FieldDescriptor *field);

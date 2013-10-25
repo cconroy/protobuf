@@ -176,6 +176,18 @@ string FieldName(const FieldDescriptor* field) {
   return result;
 }
 
+string EnumName(const EnumValueDescriptor* enum_value, bool should_mangle) {
+  string result = enum_value->name();
+  if (should_mangle) {
+    string lower = enum_value->name();
+    LowerString(&lower);
+    if (kKeywords.count(lower) > 0) {
+      result.append("_");
+    }
+  }
+  return result;
+}
+
 string FieldConstantName(const FieldDescriptor *field) {
   string field_name = UnderscoresToCamelCase(field->name(), true);
   string result = "k" + field_name + "FieldNumber";

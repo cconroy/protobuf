@@ -81,14 +81,20 @@ void EnumGenerator::GenerateDefinition(io::Printer* printer) {
   const EnumValueDescriptor* min_value = descriptor_->value(0);
   const EnumValueDescriptor* max_value = descriptor_->value(0);
 
+  bool nested = descriptor_->containing_type() != NULL;
   for (int i = 0; i < descriptor_->value_count(); i++) {
-    vars["name"] = descriptor_->value(i)->name();
     // In C++, an value of -2147483648 gets interpreted as the negative of
     // 2147483648, and since 2147483648 can't fit in an integer, this produces a
     // compiler warning.  This works around that issue.
     vars["number"] = Int32ToString(descriptor_->value(i)->number());
-    vars["prefix"] = (descriptor_->containing_type() == NULL) ?
-      "" : classname_ + "_";
+
+    if (!nested) {
+      vars["name"] = EnumName(descriptor_->value(i), true);
+      vars["prefix"] = "";
+    } else {
+      vars["name"] = EnumName(descriptor_->value(i), false);
+      vars["prefix"] = classname_ + "_";
+    }
 
     if (i > 0) printer->Print(",\n");
     printer->Print(vars, "$prefix$$name$ = $number$");
@@ -113,8 +119,8 @@ void EnumGenerator::GenerateDefinition(io::Printer* printer) {
   printer->Outdent();
   printer->Print("\n};\n");
 
-  vars["min_name"] = min_value->name();
-  vars["max_name"] = max_value->name();
+  vars["min_name"] = EnumName(min_value, !nested);
+  vars["max_name"] = EnumName(max_value, !nested);
 
   if (options_.dllexport_decl.empty()) {
     vars["dllexport"] = "";
@@ -174,9 +180,11 @@ void EnumGenerator::GenerateSymbolImports(io::Printer* printer) {
   printer->Print(vars, "typedef $classname$ $nested_name$;\n");
 
   for (int j = 0; j < descriptor_->value_count(); j++) {
-    vars["tag"] = descriptor_->value(j)->name();
+    vars["mangled_tag"] = EnumName(descriptor_->value(j), true);
+    vars["tag"] = EnumName(descriptor_->value(j), false);
+
     printer->Print(vars,
-      "static const $nested_name$ $tag$ = $classname$_$tag$;\n");
+      "static const $nested_name$ $mangled_tag$ = $classname$_$tag$;\n");
   }
 
   printer->Print(vars,
@@ -278,7 +286,7 @@ void EnumGenerator::GenerateMethods(io::Printer* printer) {
     vars["parent"] = ClassName(descriptor_->containing_type(), false);
     vars["nested_name"] = descriptor_->name();
     for (int i = 0; i < descriptor_->value_count(); i++) {
-      vars["value"] = descriptor_->value(i)->name();
+      vars["value"] = EnumName(descriptor_->value(i), true);
       printer->Print(vars,
         "const $classname$ $parent$::$value$;\n");
     }
